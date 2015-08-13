@@ -1,0 +1,91 @@
+apply plugin: 'com.android.application'
+
+//def getVersionCode = { ->
+//    try {
+//        def stdout = new ByteArrayOutputStream()
+//        exec {
+//            commandLine 'git', 'rev-list', '--first-parent', '--count', 'master'
+//            standardOutput = stdout
+//        }
+//        return (Integer.parseInt(stdout.toString().trim()) + 2200)
+//    }
+//    catch (ignored) {
+//        return 4000;
+//    }
+//}
+
+android {
+    compileSdkVersion 22
+    buildToolsVersion "22.0.1"
+
+    defaultConfig {
+        applicationId "com.scoopshot.scooptoy"
+        minSdkVersion 15
+        targetSdkVersion 22
+        versionCode 1
+        versionName "0.1"
+    }
+
+    signingConfigs {
+        release
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+        debug {
+            minifyEnabled false
+        }
+    }
+
+    productFlavors {
+        production {
+            applicationId "com.scoopshot.scooptoy"
+        }
+        preprod {
+            applicationId "com.scoopshot.scooptoy.preprod"
+            versionName "0.1-preprod"
+        }
+        dev {
+            applicationId "com.scoopshot.scooptoy.dev"
+            versionName "0.1-dev"
+        }
+    }
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+    }
+}
+
+def Properties props = new Properties()
+def propFile = file('../scooptoy-signing.properties')
+
+if (propFile.canRead()) {
+    props.load(new FileInputStream(propFile))
+
+    if (null != props) {
+        android.signingConfigs.release.storeFile = file("../"+props['keystore_file'])
+        android.signingConfigs.release.storePassword = props['keystore_password']
+        android.signingConfigs.release.keyAlias = props['key_alias']
+        android.signingConfigs.release.keyPassword = props['key_password']
+    }
+}
+
+dependencies {
+    compile 'com.android.support:appcompat-v7:22.1.1'
+    compile 'com.google.android.gms:play-services:6.5.87'
+    //    preprodReleaseCompile files('libs/scoopshot-sdk-preprod-release.jar')
+    //    productionCompile project(configuration: 'defaultConfig')
+    //    releaseCompile project(':sdk-preprod-release')
+    //    releaseCompile project(':sdk-production-release')
+    //    releaseCompile project(':sdk-dev-release')
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile project(':ScoopshotSDK-devDebug')
+}
+
