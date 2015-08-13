@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="The Nationalin kitaristi säveltää kappaleen yhdessä Pekka Kuusiston kanssa"
+        android:id="@+id/title"
+        android:layout_gravity="center_horizontal"
+        android:textSize="20dp"
+        android:textStyle="bold"
+        android:layout_margin="5dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Täällä presidentti soittelee Ylen luontoiltaan, Nobel-voittaja Martti Ahtisaari istuu kahville Café Regatan pirttipöytään ja maailmankuulun indie-yhtyeen kitaristi kuuntelee konsertin entiseen navettaan rakennetun salin takarivissä kuin kuka tahansa ohikulkija."
+        android:id="@+id/body0"
+        android:layout_gravity="center_horizontal"
+        android:layout_margin="5dp" />
+
+    <fragment
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:name="com.scoopshot.sdk.CaptureScoopFragment"
+        android:id="@+id/capture_scoop"
+        android:layout_gravity="center_horizontal"
+        tools:layout="@layout/capture_scoop" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Dessner on Suomessa Pekka Kuusiston luotsaaman Meidän festivaalin vieraana. Siellä esitellyksi tulee Dessnerin vähemmän tunnettu puoli – ei siis huikeita kitarasooloja ja The Nationalin hittibiisejä, vaan merkittävä kattaus hänen klassisen musiikin sävellyksiään."
+        android:id="@+id/body1"
+        android:layout_gravity="center_horizontal"
+        android:layout_margin="5dp" />
+</LinearLayout>
