@@ -1,40 +1,34 @@
 package com.scoopshot.scooptoy;
 
-import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.FrameLayout;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.view.Window;
 
-import com.scoopshot.sdk.AttributeMap;
-import com.scoopshot.sdk.CameraLauncher;
 import com.scoopshot.sdk.CaptureScoopFragment;
+import com.scoopshot.sdk.OpenTasksListFragment;
 import com.scoopshot.sdk.SDKNotInitializedException;
 import com.scoopshot.sdk.ScoopshotSDK;
 import com.scoopshot.sdk.ScoopshotView;
+import com.scoopshot.sdk.ScoopshotViewErrorHandler;
 import com.scoopshot.sdk.ScoopshotViewLauncher;
 import com.scoopshot.sdk.SendTaskNotificationToSelfFragment;
-import com.scoopshot.sdk.UserAttributeMap;
-import com.scoopshot.sdk.model.User;
-import com.scoopshot.sdk.sendflow.SendFlowActivity;
 
 import java.util.Random;
 
 
-public class MainActivity extends com.scoopshot.sdk.AbstractMainActivity {
+public class MainActivity extends com.scoopshot.sdk.AbstractMainActivity
+    implements ScoopshotViewErrorHandler
+{
     private MainActivity me;
 
     private ViewGroup layout_root;
-    private SendTaskNotificationToSelfFragment stnsf;
-    private CaptureScoopFragment csf;
+    private SendTaskNotificationToSelfFragment fNotif;
+    private CaptureScoopFragment fScoop;
+    private OpenTasksListFragment fTasks;
 
     private String email;
     private String name;
@@ -49,7 +43,11 @@ public class MainActivity extends com.scoopshot.sdk.AbstractMainActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+//        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        requestWindowFeature(Window.FEATURE_ACTION_BAR);
+
         super.onCreate(savedInstanceState);
+
         me = this;
         final ScoopshotView ssv;
         final ScoopshotViewLauncher svl;
@@ -64,14 +62,21 @@ public class MainActivity extends com.scoopshot.sdk.AbstractMainActivity {
 //        email = "scooptester+be@gmail.com";
 //        name = "ScoopTester Be";
 
-        stnsf = (SendTaskNotificationToSelfFragment) getFragmentManager().findFragmentById(R.id.taskNotificationForm);
+        fNotif = (SendTaskNotificationToSelfFragment) getFragmentManager().findFragmentById(R.id.taskNotificationForm);
 
-        csf = (CaptureScoopFragment) getFragmentManager().findFragmentById(R.id.capture_scoop);
-        csf.setDefaultActionOnCaptureButton();
+        fScoop = (CaptureScoopFragment) getFragmentManager().findFragmentById(R.id.capture_scoop);
+//        fScoop.setDefaultActionOnCaptureButton();
+
+        fTasks = (OpenTasksListFragment) getFragmentManager().findFragmentById(R.id.open_tasks);
+        fTasks.setScoopshotViewContainerId(R.id.root);
+        fTasks.setErrorHandler(this);
+
+        ScoopshotSDK.setScoopshotViewParentActivity(this);
+        ScoopshotSDK.setScoopshotViewContainerId(R.id.root);
 
         ScoopshotSDK.initialize(getApplicationContext());
         if (! ScoopshotSDK.hasAccessToken()) {
-            stnsf.disable();
+            fNotif.disable();
         }
 //        ScoopshotSDK.setCameraComponentClass(MyCameraActivity.class);
 
@@ -103,7 +108,7 @@ public class MainActivity extends com.scoopshot.sdk.AbstractMainActivity {
         final Intent intent;
 
         if (ScoopshotSDK.hasAccessToken()) {
-            stnsf.enable();
+            fNotif.enable();
         }
 
         intent = getIntent();

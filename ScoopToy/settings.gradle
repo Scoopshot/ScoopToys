@@ -1,2 +1,1 @@
-include ':app', ':ScoopshotSDK-devDebug'
-//, ':sdk-production-release', ':sdk-preprod-debug', ':sdk-dev-debug', ':sdk-dev-release'
+include ':app', ':ScoopshotSDK-devRelease'

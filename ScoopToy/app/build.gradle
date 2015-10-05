@@ -63,6 +63,10 @@ android {
     }
 }
 
+if (file('tasks.gradle').exists()) {
+    apply from: 'tasks.gradle'
+}
+
 def Properties props = new Properties()
 def propFile = file('../scooptoy-signing.properties')
 
@@ -80,12 +84,8 @@ if (propFile.canRead()) {
 dependencies {
     compile 'com.android.support:appcompat-v7:22.1.1'
     compile 'com.google.android.gms:play-services:6.5.87'
-    //    preprodReleaseCompile files('libs/scoopshot-sdk-preprod-release.jar')
-    //    productionCompile project(configuration: 'defaultConfig')
-    //    releaseCompile project(':sdk-preprod-release')
-    //    releaseCompile project(':sdk-production-release')
-    //    releaseCompile project(':sdk-dev-release')
+//    preprodReleaseCompile files('libs/scoopshot-sdk-preprod-release.jar')
+//    productionCompile project(configuration: 'defaultConfig')
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile project(':ScoopshotSDK-devDebug')
+    compile project(':ScoopshotSDK-devRelease')
 }
-
