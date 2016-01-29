@@ -22,18 +22,16 @@
         android:id="@+id/forms"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:weightSum="2"
         android:padding="16dp"
         android:orientation="vertical"
         android:layout_gravity="center_horizontal|top"
         android:gravity="top"
     >
         <fragment
-            android:id="@+id/taskNotificationForm"
+            android:id="@+id/userData"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.9"
-            class="com.scoopshot.sdk.SendTaskNotificationToSelfFragment"
+            android:layout_height="wrap_content"
+            class="com.scoopshot.sdk.fragment.UserDataFragment"
         />
         <View
             android:layout_height="2dp"
@@ -41,11 +39,10 @@
             android:background="#cccccc"
         />
         <fragment
-            android:id="@+id/capture_scoop"
+            android:id="@+id/taskNotificationForm"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="0.9"
-            class="com.scoopshot.sdk.CaptureScoopFragment"
+            android:layout_height="wrap_content"
+            class="com.scoopshot.sdk.fragment.SendTaskNotificationToSelfFragment"
         />
         <View
             android:layout_height="2dp"
@@ -55,11 +52,14 @@
         <fragment
             android:id="@+id/open_tasks"
             android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_weight="0.2"
-            class="com.scoopshot.sdk.OpenTasksListFragment"
+            android:layout_height="wrap_content"
+            class="com.scoopshot.sdk.fragment.OpenTasksListFragment"
+        />
+        <fragment
+            android:id="@+id/capture_scoop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            class="com.scoopshot.sdk.fragment.CaptureScoopFragment"
         />
     </LinearLayout>
-    <!--
-    -->
 </FrameLayout>

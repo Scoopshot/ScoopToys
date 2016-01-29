@@ -1,27 +1,33 @@
 package com.scoopshot.scooptoy;
 
+import android.app.Activity;
+import android.app.FragmentManager;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
-import android.view.Window;
+import android.widget.Toast;
 
-import com.scoopshot.sdk.CaptureScoopFragment;
-import com.scoopshot.sdk.OpenTasksListFragment;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.scoopshot.sdk.NoFragmentFoundException;
 import com.scoopshot.sdk.SDKNotInitializedException;
+import com.scoopshot.sdk.ScoopshotContentErrorHandler;
 import com.scoopshot.sdk.ScoopshotSDK;
-import com.scoopshot.sdk.ScoopshotView;
-import com.scoopshot.sdk.ScoopshotViewErrorHandler;
-import com.scoopshot.sdk.ScoopshotViewLauncher;
-import com.scoopshot.sdk.SendTaskNotificationToSelfFragment;
+import com.scoopshot.sdk.UserExistsAlreadyException;
+import com.scoopshot.sdk.UserNotAccessibleException;
+import com.scoopshot.sdk.fragment.CaptureScoopFragment;
+import com.scoopshot.sdk.fragment.OpenTasksListFragment;
+import com.scoopshot.sdk.fragment.ScoopshotContentFragment;
+import com.scoopshot.sdk.fragment.SendTaskNotificationToSelfFragment;
+import com.scoopshot.sdk.fragment.UserDataFragment;
 
-import java.util.Random;
 
-
-public class MainActivity extends com.scoopshot.sdk.AbstractMainActivity
-    implements ScoopshotViewErrorHandler
+public class MainActivity
+    extends com.scoopshot.sdk.activity.ScoopshotAbstractMainActivity
+//    implements ScoopshotContentErrorHandler
 {
     private MainActivity me;
 
@@ -29,12 +35,10 @@ public class MainActivity extends com.scoopshot.sdk.AbstractMainActivity
     private SendTaskNotificationToSelfFragment fNotif;
     private CaptureScoopFragment fScoop;
     private OpenTasksListFragment fTasks;
+    private UserDataFragment fUser;
 
     private String email;
     private String name;
-
-    private Random random = new Random();
-    private final String chars = "abcdefghijklmnopqrstuvwxyz1234567890";
 
     public MainActivity() {
         setTag("ScoopToy.Main");
@@ -44,62 +48,97 @@ public class MainActivity extends com.scoopshot.sdk.AbstractMainActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 //        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        requestWindowFeature(Window.FEATURE_ACTION_BAR);
+//        requestWindowFeature(Window.FEATURE_ACTION_BAR);
+//        requestWindowFeature(Window.FEATURE_CONTEXT_MENU);
 
         super.onCreate(savedInstanceState);
 
         me = this;
-        final ScoopshotView ssv;
-        final ScoopshotViewLauncher svl;
 
         setContentView(R.layout.activity_main);
         layout_root = (ViewGroup) findViewById(R.id.root);
 
-        svl = ScoopshotSDK.getScoopshotViewLauncher(this, R.id.root);
-        setScoopshotView(svl.getScoopshotView());
+        ScoopshotSDK.initialize(getApplicationContext());
+        ScoopshotSDK.setScoopshotActivity(this);
+        ScoopshotSDK.setScoopshotContainerId(R.id.root);
+        ScoopshotSDK.setApplicationId(BuildConfig.scoopshotSdkApplicationId);
+        ScoopshotSDK.setClientKey(BuildConfig.scoopshotSdkClientKey);
+
+        fNotif = (SendTaskNotificationToSelfFragment) getFragmentManager().findFragmentById(R.id.taskNotificationForm);
+
+        try {
+            ScoopshotSDK.createUser("", "", new Runnable() {
+                @Override
+                public void run() {
+                    if (ScoopshotSDK.hasAccessToken()) {
+                        fNotif.enable();
+                    }
+                }
+            }, null);
+        }
+        catch (UserExistsAlreadyException e) {
+            e.printStackTrace();
+        }
+        catch (SDKNotInitializedException e) {
+            e.printStackTrace();
+        }
+
 
         /* hack, because at least email is needed so that we won't get "missing authentication field" errors */
 //        email = "scooptester+be@gmail.com";
 //        name = "ScoopTester Be";
 
-        fNotif = (SendTaskNotificationToSelfFragment) getFragmentManager().findFragmentById(R.id.taskNotificationForm);
-
-        fScoop = (CaptureScoopFragment) getFragmentManager().findFragmentById(R.id.capture_scoop);
-//        fScoop.setDefaultActionOnCaptureButton();
+        fUser = (UserDataFragment) getFragmentManager().findFragmentById(R.id.userData);
 
         fTasks = (OpenTasksListFragment) getFragmentManager().findFragmentById(R.id.open_tasks);
-        fTasks.setScoopshotViewContainerId(R.id.root);
-        fTasks.setErrorHandler(this);
+//        fTasks.setScoopshotContentContainerId(R.id.root);
+//        fTasks.setErrorHandler(this);
+        fTasks.setArguments(R.id.root, this);
 
-        ScoopshotSDK.setScoopshotViewParentActivity(this);
-        ScoopshotSDK.setScoopshotViewContainerId(R.id.root);
+        fScoop = (CaptureScoopFragment) getFragmentManager().findFragmentById(R.id.capture_scoop);
+        fScoop.setArguments(R.id.root);
+//        fScoop.setDefaultActionOnCaptureButton();
 
-        ScoopshotSDK.initialize(getApplicationContext());
         if (! ScoopshotSDK.hasAccessToken()) {
             fNotif.disable();
         }
 //        ScoopshotSDK.setCameraComponentClass(MyCameraActivity.class);
 
         try {
-            Log.i(TAG, "registered to GCM? " + String.valueOf(ScoopshotSDK.isRegisteredToGCM()));
+            ScoopshotSDK.registerToGCM();
         }
-        catch (SDKNotInitializedException e) {
+        catch (GooglePlayServicesNotAvailableException e) {
             e.printStackTrace();
         }
+
+//        Boolean registeredToC2DM = null;
+//        try {
+//            registeredToC2DM = ScoopshotSDK.isRegisteredToGCM();
+//        }
+//        catch (SDKNotInitializedException e) {
+//            e.printStackTrace();
+//        }
+//
+//        Log.i(TAG, "registered to GCM? " + String.valueOf(registeredToC2DM));
     }
 
     /*
-     * Scoopshot SDK's AbstractMainActivity's onActivityResult is abstract so
+     * ScoopshotAbstractMainActivity#onActivityResult() is abstract so
      * trying to call it is futile.
      */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        ScoopshotSDK.actAccordingToActivityResult(this, requestCode, resultCode, data);
+        _onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
     }
 
     @Override
@@ -118,29 +157,40 @@ public class MainActivity extends com.scoopshot.sdk.AbstractMainActivity
         }
     }
 
-    private int getRandomNumber() {
-        int randomInt = 0;
-        randomInt = random.nextInt(chars.length());
-
-        if (randomInt - 1 != -1) {
-            randomInt -= 1;
-        }
-
-        return randomInt;
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
     }
 
-    private String generateRandomString(int length) {
-        StringBuffer randStr = new StringBuffer();
-        char ch;
-        int i = 0;
+    @Override
+    public void onBackPressed() {
+        final int finishAt = 1;
+        final int bsec;
+        final FragmentManager fm;
 
-        for (; i < length; ++ i) {
-            int number = getRandomNumber();
-            ch = chars.charAt(number);
-            randStr.append(ch);
+        Log.i(TAG, "MainActivity#onBackPressed()");
+
+        fm = this.getFragmentManager();
+        bsec = fm.getBackStackEntryCount();
+
+        if (bsec > finishAt) {
+            try {
+                goBack();
+                fm.popBackStack();
+            }
+            catch (NoFragmentFoundException e) {
+                e.printStackTrace();
+                fm.popBackStack();
+            }
         }
-
-        return randStr.toString();
+        else if (bsec == finishAt) {
+            fm.popBackStack();
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        }
+        else {
+            /* when bsec == 0 */
+            super.onBackPressed();
+        }
     }
 
     @Override
@@ -148,6 +198,14 @@ public class MainActivity extends com.scoopshot.sdk.AbstractMainActivity
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
+    }
+
+    private void openSettings() {
+        try {
+            ScoopshotContentFragment.getInstance(this, this, R.id.root).openSettings();
+        } catch (UserNotAccessibleException e) {
+            e.printStackTrace(); /* shouldn't happen */
+        }
     }
 
     @Override
@@ -159,6 +217,22 @@ public class MainActivity extends com.scoopshot.sdk.AbstractMainActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            if (ScoopshotSDK.hasAccessToken()) {
+                openSettings();
+            }
+            else {
+//                Toast.makeText(this, "You are not registered yet -- do it by opening the Tasks list or capture a Scoop", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Registering you as a new user .. try again in a couple seconds", Toast.LENGTH_LONG).show();
+                try {
+                    ScoopshotSDK.createUser(fUser.getEmail(), fUser.getName());
+                }
+                catch (UserExistsAlreadyException e) {
+                    e.printStackTrace();
+                }
+                catch (SDKNotInitializedException e) {
+                    e.printStackTrace();
+                }
+            }
             return true;
         }
 
@@ -166,12 +240,12 @@ public class MainActivity extends com.scoopshot.sdk.AbstractMainActivity
     }
 
     @Override
-    public void handleScoopshotViewError(int statusCode) {
+    public void handleScoopshotContentError(int statusCode, String message) {
         switch (statusCode) {
             case 401:
                 /* accessToken is either null or expired
                  */
-                showUnauthorizedRequestErrorDialog();
+                showUnauthorizedRequestErrorDialog(ScoopshotContentFragment.getInstance());
         }
     }
 }

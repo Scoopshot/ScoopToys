@@ -14,16 +14,24 @@ apply plugin: 'com.android.application'
 //    }
 //}
 
+def Properties propScoopshotSDK = new Properties()
+def propFile = file('./scoopshotsdk.properties')
+
+if (propFile.canRead()) {
+    propScoopshotSDK.load(new FileInputStream(propFile))
+}
+
+
 android {
-    compileSdkVersion 22
-    buildToolsVersion "22.0.1"
+    compileSdkVersion 23
+    buildToolsVersion "23.0.2"
 
     defaultConfig {
         applicationId "com.scoopshot.scooptoy"
         minSdkVersion 15
-        targetSdkVersion 22
+        targetSdkVersion 23
         versionCode 1
-        versionName "0.1"
+        versionName "0.3"
     }
 
     signingConfigs {
@@ -35,9 +43,13 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
+            buildConfigField "String", "scoopshotSdkApplicationId", '"' + propScoopshotSDK['applicationId'] + '"'
+            buildConfigField "String", "scoopshotSdkClientKey", '"' + propScoopshotSDK['clientKey'] + '"'
         }
         debug {
             minifyEnabled false
+            buildConfigField "String", "scoopshotSdkApplicationId", '"' + propScoopshotSDK['applicationId'] + '"'
+            buildConfigField "String", "scoopshotSdkClientKey", '"' + propScoopshotSDK['clientKey'] + '"'
         }
     }
 
@@ -47,11 +59,15 @@ android {
         }
         preprod {
             applicationId "com.scoopshot.scooptoy.preprod"
-            versionName "0.1-preprod"
+            versionName "0.3-preprod"
         }
         dev {
             applicationId "com.scoopshot.scooptoy.dev"
-            versionName "0.1-dev"
+            versionName "0.3-dev"
+        }
+        local {
+            applicationId 'com.scoopshot.scooptoy.local'
+            versionName '0.3-dev'
         }
     }
     packagingOptions {
@@ -67,25 +83,32 @@ if (file('tasks.gradle').exists()) {
     apply from: 'tasks.gradle'
 }
 
-def Properties props = new Properties()
-def propFile = file('../scooptoy-signing.properties')
+def Properties propSigning = new Properties()
+propFile = file('../scooptoy-signing.properties')
 
 if (propFile.canRead()) {
-    props.load(new FileInputStream(propFile))
+    propSigning.load(new FileInputStream(propFile))
 
-    if (null != props) {
-        android.signingConfigs.release.storeFile = file("../"+props['keystore_file'])
-        android.signingConfigs.release.storePassword = props['keystore_password']
-        android.signingConfigs.release.keyAlias = props['key_alias']
-        android.signingConfigs.release.keyPassword = props['key_password']
+    if (null != propSigning) {
+        android.signingConfigs.release.storeFile = file("../" + propSigning['keystore_file'])
+        android.signingConfigs.release.storePassword = propSigning['keystore_password']
+        android.signingConfigs.release.keyAlias = propSigning['key_alias']
+        android.signingConfigs.release.keyPassword = propSigning['key_password']
     }
 }
 
 dependencies {
-    compile 'com.android.support:appcompat-v7:22.1.1'
+    compile 'com.android.support:appcompat-v7:23.0.1'
     compile 'com.google.android.gms:play-services:6.5.87'
-//    preprodReleaseCompile files('libs/scoopshot-sdk-preprod-release.jar')
-//    productionCompile project(configuration: 'defaultConfig')
+    compile 'com.googlecode.mp4parser:isoparser:1.0.4.2'
+    //    preprodReleaseCompile files('libs/scoopshot-sdk-preprod-release.jar')
+    //    productionCompile project(configuration: 'defaultConfig')
+    //    releaseCompile project(':sdk-preprod-release')
+    //    releaseCompile project(':sdk-production-release')
+    //    releaseCompile project(':sdk-dev-release')
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile project(':ScoopshotSDK-devRelease')
+    //    debugCompile project(':ScoopshotSDK-localDebug')
+    debugCompile project(':ScoopshotSDK-devDebug')
+//    debugCompile project(':ScoopshotSDK-preprodDebug')
+    releaseCompile project(':ScoopshotSDK-devRelease')
 }
